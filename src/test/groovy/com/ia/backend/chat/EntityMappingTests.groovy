@@ -72,7 +72,9 @@ class EntityMappingTests {
 
 		// Las columnas físicas existen con los nombres snake_case del esquema
 		def conversationRow = (Object[]) em.createNativeQuery(
-				'select id, user_id, title, created_at, updated_at from conversations').singleResult
+				'select id, user_id, title, created_at, updated_at from conversations where id = :id')
+				.setParameter('id', conversation.id)
+				.singleResult
 		assertThat(aUuid(conversationRow[0])).isEqualTo(conversation.id)
 		assertThat(aUuid(conversationRow[1])).isEqualTo(user.id)
 
@@ -103,10 +105,23 @@ class EntityMappingTests {
 
 	@Test
 	void 'las consultas HQL resuelven todas las entidades'() {
-		assertThat(em.createQuery('select count(u) from User u', Long).singleResult).isZero()
-		assertThat(em.createQuery('select count(c) from Conversation c', Long).singleResult).isZero()
-		assertThat(em.createQuery('select count(m) from Message m where m.status = :status', Long)
+		def user = new User(email: "hql-${UUID.randomUUID()}@example.com", displayName: 'HQL', passwordHash: 'x')
+		em.persist(user)
+		def conversation = new Conversation(userId: user.id, title: 'HQL')
+		em.persist(conversation)
+		em.persist(new Message(conversationId: conversation.id, position: 0L, role: 'user',
+				content: 'hola', message: 'hola'))
+		em.flush()
+
+		assertThat(em.createQuery('select count(u) from User u where u.id = :id', Long)
+				.setParameter('id', user.id)
+				.singleResult).isEqualTo(1L)
+		assertThat(em.createQuery('select count(c) from Conversation c where c.userId = :userId', Long)
+				.setParameter('userId', user.id)
+				.singleResult).isEqualTo(1L)
+		assertThat(em.createQuery('select count(m) from Message m where m.conversationId = :cid and m.status = :status', Long)
+				.setParameter('cid', conversation.id)
 				.setParameter('status', 'completed')
-				.singleResult).isZero()
+				.singleResult).isEqualTo(1L)
 	}
 }

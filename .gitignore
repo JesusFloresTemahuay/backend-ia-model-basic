@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Eclipse Theia ###
+.theia/
+
+### Bruno ###
+bruno/
