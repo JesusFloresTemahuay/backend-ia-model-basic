@@ -31,8 +31,8 @@ class CompletionsClient {
 	private static final log = LoggerFactory.getLogger(CompletionsClient)
 
 	private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5)
-	// Un modelo de razonamiento puede tardar bastante en generar la respuesta
-	private static final Duration READ_TIMEOUT = Duration.ofSeconds(120)
+	// El modelo puede tardar hasta ~5 minutos en responder peticiones complejas
+	private static final Duration READ_TIMEOUT = Duration.ofSeconds(300)
 
 	private static final double DEFAULT_TEMPERATURE = 0.7d
 

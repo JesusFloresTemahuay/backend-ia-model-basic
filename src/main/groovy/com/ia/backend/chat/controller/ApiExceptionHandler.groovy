@@ -1,6 +1,11 @@
 package com.ia.backend.chat.controller
 
+import com.ia.backend.chat.client.CompletionsClientException
+import com.ia.backend.chat.service.ConversationAccessDeniedException
+import com.ia.backend.chat.service.ConversationNotFoundException
 import com.ia.backend.chat.service.DuplicateUserException
+import com.ia.backend.chat.service.MessageNotFoundException
+import com.ia.backend.chat.service.MessageValidationException
 import com.ia.backend.chat.service.UserNotFoundException
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -45,6 +50,26 @@ class ApiExceptionHandler {
 		ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message)
 	}
 
+	@ExceptionHandler(ConversationNotFoundException)
+	ProblemDetail handleConversationNotFound(ConversationNotFoundException ex) {
+		ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message)
+	}
+
+	@ExceptionHandler(MessageNotFoundException)
+	ProblemDetail handleMessageNotFound(MessageNotFoundException ex) {
+		ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message)
+	}
+
+	@ExceptionHandler(ConversationAccessDeniedException)
+	ProblemDetail handleConversationAccessDenied(ConversationAccessDeniedException ex) {
+		ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message)
+	}
+
+	@ExceptionHandler(MessageValidationException)
+	ProblemDetail handleMessageValidation(MessageValidationException ex) {
+		ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message)
+	}
+
 	@ExceptionHandler(DuplicateUserException)
 	ProblemDetail handleDuplicate(DuplicateUserException ex) {
 		ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message)
@@ -54,6 +79,12 @@ class ApiExceptionHandler {
 	ProblemDetail handleIntegrityViolation(DataIntegrityViolationException ex) {
 		log.warn('Violación de integridad de datos', ex)
 		ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, 'La operación viola una restricción de integridad de la base de datos')
+	}
+
+	@ExceptionHandler(CompletionsClientException)
+	ProblemDetail handleCompletionsClient(CompletionsClientException ex) {
+		// La API externa falló o respondió algo inesperado: es un fallo del "gateway"
+		ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.message)
 	}
 
 	@ExceptionHandler(Exception)
