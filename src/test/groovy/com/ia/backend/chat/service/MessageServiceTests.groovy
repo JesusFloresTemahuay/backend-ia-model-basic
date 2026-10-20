@@ -98,6 +98,11 @@ class MessageServiceTests {
 				.hasMessageContaining('role')
 				.hasMessageContaining('assistant, system, tool, user')
 
+		// Las herramientas se guardan con role 'tool' (+ metadata), no con un rol propio
+		assertThatThrownBy { messageService.create(conversationId, 'internet-tool', 'hola') }
+				.isInstanceOf(MessageValidationException)
+				.hasMessageContaining('role')
+
 		assertThatThrownBy { messageService.create(conversationId, 'user', '   ') }
 				.isInstanceOf(MessageValidationException)
 				.hasMessageContaining('content')

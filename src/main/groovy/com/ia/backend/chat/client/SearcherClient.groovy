@@ -14,7 +14,7 @@ import java.time.Duration
 /**
  * Cliente REST de la API externa de búsqueda.
  *
- *     POST {EXTERNAL_API_SEARCHER}?q={texto}&format=json
+ *     POST {EXTERNAL_API_SEARCHER}?q={consulta percent-encoded}&format=json
  *
  * La URL se toma de la variable de entorno EXTERNAL_API_SEARCHER (propiedad
  * external.api.searcher). Es un cliente de uso interno: NO expone ningún endpoint,
@@ -42,9 +42,13 @@ class SearcherClient {
 	/**
 	 * Ejecuta una búsqueda contra la API externa.
 	 *
-	 * @param query texto a buscar (parámetro q)
+	 * @param query consulta ya percent-encoded (p. ej. la que produce
+	 *              URLEncoder.encode(consulta, UTF_8)): viaja tal cual en el
+	 *              parámetro q para que sea compartible con el endpoint sin
+	 *              doble codificación
 	 * @return la respuesta ya mapeada; nunca null
-	 * @throws SearcherClientException si la consulta está vacía, falta la configuración,
+	 * @throws SearcherClientException si la consulta está vacía o no es una query
+	 *                                 string válida, falta la configuración,
 	 *                                 la API devuelve un error HTTP o no hay conexión
 	 */
 	SearchResponse search(String query) {
@@ -57,12 +61,19 @@ class SearcherClient {
 			throw new SearcherClientException('La consulta (q) no puede estar vacía')
 		}
 
-		def uri = UriComponentsBuilder.fromUriString(baseUrl)
-				.queryParam('q', normalized)
-				.queryParam('format', 'json')
-				.build()
-				.encode()
-				.toUri()
+		URI uri
+		try {
+			// build(true): la consulta llega ya percent-encoded y se respeta tal
+			// cual (encode() re-codificaría los % y dejaría la frase inservible)
+			uri = UriComponentsBuilder.fromUriString(baseUrl)
+					.queryParam('q', normalized)
+					.queryParam('format', 'json')
+					.build(true)
+					.toUri()
+		} catch (IllegalArgumentException e) {
+			throw new SearcherClientException(
+					"La consulta (q) no está percent-encoded correctamente: ${normalized}", e)
+		}
 
 		try {
 			def response = restClient.post().uri(uri).retrieve().body(SearchResponse)

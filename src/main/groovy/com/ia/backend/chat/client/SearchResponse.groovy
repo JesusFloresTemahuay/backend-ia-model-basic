@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Respuesta de la API externa de búsqueda:
- * POST {EXTERNAL_API_SEARCHER}?q={texto}&format=json
+ * POST {EXTERNAL_API_SEARCHER}?q={consulta percent-encoded}&format=json
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 class SearchResponse {

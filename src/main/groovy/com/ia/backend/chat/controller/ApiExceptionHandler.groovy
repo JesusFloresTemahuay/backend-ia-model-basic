@@ -1,6 +1,8 @@
 package com.ia.backend.chat.controller
 
 import com.ia.backend.chat.client.CompletionsClientException
+import com.ia.backend.chat.client.CrawlerClientException
+import com.ia.backend.chat.client.SearcherClientException
 import com.ia.backend.chat.service.ConversationAccessDeniedException
 import com.ia.backend.chat.service.ConversationNotFoundException
 import com.ia.backend.chat.service.DuplicateUserException
@@ -84,6 +86,16 @@ class ApiExceptionHandler {
 	@ExceptionHandler(CompletionsClientException)
 	ProblemDetail handleCompletionsClient(CompletionsClientException ex) {
 		// La API externa falló o respondió algo inesperado: es un fallo del "gateway"
+		ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.message)
+	}
+
+	@ExceptionHandler(SearcherClientException)
+	ProblemDetail handleSearcherClient(SearcherClientException ex) {
+		ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.message)
+	}
+
+	@ExceptionHandler(CrawlerClientException)
+	ProblemDetail handleCrawlerClient(CrawlerClientException ex) {
 		ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.message)
 	}
 

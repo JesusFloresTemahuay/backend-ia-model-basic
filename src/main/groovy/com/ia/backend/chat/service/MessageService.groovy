@@ -14,7 +14,11 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class MessageService {
 
-	/** Debe coincidir con el CHECK constraint role de la tabla messages. */
+	/**
+	 * Debe coincidir con el CHECK constraint role de la tabla messages.
+	 * Los datos que inyecta una herramienta se guardan con role 'tool' y el
+	 * nombre de la herramienta en metadata (p. ej. {"tool": "internet-tool"}).
+	 */
 	private static final Set<String> ALLOWED_ROLES = ['system', 'user', 'assistant', 'tool'].toSet()
 
 	private final MessageRepository messageRepository

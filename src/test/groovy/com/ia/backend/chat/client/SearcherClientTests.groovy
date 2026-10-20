@@ -83,7 +83,8 @@ class SearcherClientTests {
 		server = HttpServer.create(new InetSocketAddress('localhost', 0), 0)
 		server.createContext('/search', { HttpExchange exchange ->
 			lastMethod = exchange.requestMethod
-			lastRawQuery = exchange.requestURI.query
+			// rawQuery: conserva el percent-encoding tal cual llega por la red
+			lastRawQuery = exchange.requestURI.rawQuery
 			responder(exchange, 200, SAMPLE_JSON)
 		} as HttpHandler)
 		server.createContext('/error', { HttpExchange exchange ->
@@ -106,13 +107,26 @@ class SearcherClientTests {
 	}
 
 	@Test
-	void 'envia un POST con q y format en la query string'() {
-		def response = new SearcherClient(baseUrl).search('como hacer un comal')
+	void 'envia un POST con q percent-encoded y format en la query string'() {
+		def response = new SearcherClient(baseUrl).search(URLEncoder.encode('como hacer un comal', StandardCharsets.UTF_8))
 
 		assertThat(lastMethod).isEqualTo('POST')
-		def decoded = URLDecoder.decode(lastRawQuery, StandardCharsets.UTF_8)
-		assertThat(decoded).isEqualTo('q=como hacer un comal&format=json')
+		assertThat(lastRawQuery).isEqualTo('q=como+hacer+un+comal&format=json')
 		assertThat(response.query).isEqualTo('como+hacer+un+comal')
+	}
+
+	@Test
+	void 'no doble-codifica los acentos de la consulta'() {
+		new SearcherClient(baseUrl).search(URLEncoder.encode('qué es el comal', StandardCharsets.UTF_8))
+
+		assertThat(lastRawQuery).isEqualTo('q=qu%C3%A9+es+el+comal&format=json')
+	}
+
+	@Test
+	void 'lanza SearcherClientException si la consulta no viene percent-encoded'() {
+		assertThatThrownBy { new SearcherClient(baseUrl).search('como hacer un comal') }
+				.isInstanceOf(SearcherClientException)
+				.hasMessageContaining('percent-encoded')
 	}
 
 	@Test
